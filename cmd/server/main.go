@@ -8,6 +8,9 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/joho/godotenv"
 
@@ -38,22 +41,26 @@ func run() error {
 		return errors.New("DATABASE_URL es obligatorio")
 	}
 
-	ctx := context.Background()
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
 
 	pool, err := postgres.NewPool(ctx, databaseURL)
-
-	if err != nil {
+	if err!= nil {
 		return err
 	}
-	defer func() {
-		pool.Close()
-		fmt.Println("Pool de PostgreSQL cerrado")
-	}()
+
+	defer pool.Close()
 
 	fmt.Println("Conectado a PostgreSQL")
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /health", handler.HealthCheck)
+
+	srv := &http.Server{
+		Handler: mux,
+		ReadTimeout: 10 * time.Second,
+		WriteTimeout: 10 * time.Second,
+	}
 
 	listener, err := net.Listen("tcp", ":"+port)
 	if err != nil {
@@ -62,6 +69,29 @@ func run() error {
 
 	fmt.Println("Servidor escuchando en", listener.Addr())
 
-	return http.Serve(listener, mux)
+	// El servidor correindo en su propio goroutine.
+	serverErr := make(chan error, 1)
+	go func(){
+		serverErr <- srv.Serve(listener)
+	}()
+
+	// Esperamos lo que ocurra primero
+	select {
+	case  err := <- serverErr:
+		return fmt.Errorf("servidor HTTP: %w", err)
+	case <- ctx.Done():
+		fmt.Println("Señal recibida, apagando...")
+	}
+
+	//Damos hasta 15 segundos ara que terminen as peticiones en curso.
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+
+	if err := srv.Shutdown(shutdownCtx); err != nil {
+		return fmt.Errorf("apagar servidor: %w", err)
+	}
+
+	fmt.Println("Servidor detenido correctamente")
+	return nil
 
 }
