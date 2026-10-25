@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"log"
@@ -8,8 +9,10 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/Perseo-2025/golazo-api/internal/handler"
 	"github.com/joho/godotenv"
+
+	"github.com/Perseo-2025/golazo-api/internal/handler"
+	"github.com/Perseo-2025/golazo-api/internal/platform/postgres"
 )
 
 func main(){
@@ -23,7 +26,23 @@ func main(){
 	if port == "" {
 		port = "8080" // asigna un valor si el puerto está vacío
 	}
-	
+
+	databaseURL := os.Getenv("DATABASE_URL")
+	if databaseURL == "" {
+		log.Fatal("DATABASE_URL es obligatorio")
+	}
+
+	ctx := context.Background()
+
+	pool, err := postgres.NewPool(ctx, databaseURL)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer pool.Close()
+
+	fmt.Println("Conectado a PostgreSQL")
+
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /health", handler.HealthCheck)
 
