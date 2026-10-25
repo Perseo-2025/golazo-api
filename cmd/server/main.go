@@ -15,11 +15,17 @@ import (
 	"github.com/Perseo-2025/golazo-api/internal/platform/postgres"
 )
 
-func main(){
+func main() {
+	if err := run(); err != nil {
+		log.Fatal(err) // el ÚNICO lugar donde el programa termina con error
+	}
+}
+
+func run() error {
 
 	// carga .env si existe. En producción no habrá archivado ye stá bien.
 	if err := godotenv.Load(); err != nil && !errors.Is(err, os.ErrNotExist) {
-		log.Fatal("error leyendo .env: ", err)
+		return fmt.Errorf("leer .env: %w", err)
 	}
 
 	port := os.Getenv("HTTP_PORT")
@@ -29,7 +35,7 @@ func main(){
 
 	databaseURL := os.Getenv("DATABASE_URL")
 	if databaseURL == "" {
-		log.Fatal("DATABASE_URL es obligatorio")
+		return errors.New("DATABASE_URL es obligatorio")
 	}
 
 	ctx := context.Background()
@@ -37,9 +43,12 @@ func main(){
 	pool, err := postgres.NewPool(ctx, databaseURL)
 
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
-	defer pool.Close()
+	defer func() {
+		pool.Close()
+		fmt.Println("Pool de PostgreSQL cerrado")
+	}()
 
 	fmt.Println("Conectado a PostgreSQL")
 
@@ -48,13 +57,11 @@ func main(){
 
 	listener, err := net.Listen("tcp", ":"+port)
 	if err != nil {
-		log.Fatal(err) 
+		return fmt.Errorf("escuchar en el puerto %s: %w", port, err)
 	}
 
 	fmt.Println("Servidor escuchando en", listener.Addr())
 
-	if err := http.Serve(listener, mux); err != nil {
-		log.Fatal(err)
-	}
+	return http.Serve(listener, mux)
 
 }
