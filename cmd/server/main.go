@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
+	"log/slog"
 	"net"
 	"net/http"
 	"os"
@@ -19,45 +19,55 @@ import (
 )
 
 func main() {
-	if err := run(); err != nil {
-		log.Fatal(err) // el ÚNICO lugar donde el programa termina con error
+
+	looger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+
+	if err := run(looger); err != nil {
+		looger.Error("la aplicación terminó con error", "error", err)
+		os.Exit(1)
 	}
 }
 
-func run() error {
+func run(logger *slog.Logger) error {
 
-	// carga .env si existe. En producción no habrá archivado ye stá bien.
 	if err := godotenv.Load(); err != nil && !errors.Is(err, os.ErrNotExist) {
-		return fmt.Errorf("leer .env: %w", err)
+		return fmt.Errorf("leer .env :%w", err)
+	}
+
+	// validamos que entre las variables de entorno
+	env := os.Getenv("APP_ENV")
+	if env == "" {
+		env = "development"
 	}
 
 	port := os.Getenv("HTTP_PORT")
 	if port == "" {
-		port = "8080" // asigna un valor si el puerto está vacío
+		port = "8080"
 	}
 
 	databaseURL := os.Getenv("DATABASE_URL")
 	if databaseURL == "" {
-		return errors.New("DATABASE_URL es obligatorio")
+		return errors.New("DARABASE_URL es Obligatorio")
 	}
 
+	// creamos el contexto
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
+	// creamos el pool de conexiones
 	pool, err := postgres.NewPool(ctx, databaseURL)
-	if err!= nil {
+	if err != nil {
 		return err
 	}
-
 	defer pool.Close()
 
-	fmt.Println("Conectado a PostgreSQL")
+	logger.Info("conectado a POSTGRESQL")
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("GET /health", handler.HealthCheck)
+	mux.HandleFunc("GET  /health", handler.HealthCheck)
 
-	srv := &http.Server{
-		Handler: mux,
+	srv := &http.Server {
+		Handler:  mux,
 		ReadTimeout: 10 * time.Second,
 		WriteTimeout: 10 * time.Second,
 	}
@@ -67,31 +77,28 @@ func run() error {
 		return fmt.Errorf("escuchar en el puerto %s: %w", port, err)
 	}
 
-	fmt.Println("Servidor escuchando en", listener.Addr())
+	logger.Info("servidor HTTP escuchando", "addr", listener.Addr().String(), "env", env)
 
-	// El servidor correindo en su propio goroutine.
 	serverErr := make(chan error, 1)
 	go func(){
 		serverErr <- srv.Serve(listener)
 	}()
 
-	// Esperamos lo que ocurra primero
 	select {
-	case  err := <- serverErr:
+	case err := <- serverErr:
 		return fmt.Errorf("servidor HTTP: %w", err)
 	case <- ctx.Done():
-		fmt.Println("Señal recibida, apagando...")
+		logger.Info("señal recibida, apagando")
 	}
 
-	//Damos hasta 15 segundos ara que terminen as peticiones en curso.
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
 	if err := srv.Shutdown(shutdownCtx); err != nil {
-		return fmt.Errorf("apagar servidor: %w", err)
+		return  fmt.Errorf("apagar servidor: %w", err)
 	}
 
-	fmt.Println("Servidor detenido correctamente")
-	return nil
+	logger.Info("servidor detenido correctamente")
 
+	return nil
 }
