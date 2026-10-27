@@ -1,0 +1,43 @@
+version: "3"
+
+dotenv: [".env"]
+
+vars:
+  MIGRATIONS_DIR: migrations
+
+tasks:
+  default:
+    desc: Lista las tareas disponibles
+    cmds:
+      - task --list
+    silent: true
+
+  run:
+    desc: Levanta la API
+    cmds:
+      - go run ./cmd/server
+
+  db:up:
+    desc: Levanta PostgreSQL en Docker
+    cmds:
+      - docker compose up -d
+
+  db:stop:
+    desc: Detiene PostgreSQL (los datos se conservan)
+    cmds:
+      - docker compose stop
+
+  migrate:create:
+    desc: "Crea una migración nueva. Uso: task migrate:create -- nombre"
+    cmds:
+      - migrate create -ext sql -dir {{.MIGRATIONS_DIR}} -seq {{.CLI_ARGS}}
+
+  migrate:up:
+    desc: Aplica las migraciones pendientes
+    cmds:
+      - migrate -path {{.MIGRATIONS_DIR}} -database "$DATABASE_URL" up
+
+  migrate:down:
+    desc: Revierte la última migración
+    cmds:
+      - migrate -path {{.MIGRATIONS_DIR}} -database "$DATABASE_URL" down 1
