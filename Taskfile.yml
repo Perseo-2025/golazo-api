@@ -41,3 +41,8 @@ tasks:
     desc: Revierte la última migración
     cmds:
       - migrate -path {{.MIGRATIONS_DIR}} -database "$DATABASE_URL" down 1
+      
+  migrate:force:
+    desc: "Corrige el estado dirty. Uso: task migrate:force -- VERSION"
+    cmds:
+      - migrate -path {{.MIGRATIONS_DIR}} -database "$DATABASE_URL" force {{.CLI_ARGS}}
