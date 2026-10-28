@@ -46,3 +46,8 @@ tasks:
     desc: "Corrige el estado dirty. Uso: task migrate:force -- VERSION"
     cmds:
       - migrate -path {{.MIGRATIONS_DIR}} -database "$DATABASE_URL" force {{.CLI_ARGS}}
+
+  test:
+    desc: Ejecuta todos los tests
+    cmds:
+      - go test ./... -v
