@@ -35,6 +35,8 @@ var (
 	ErrInvalidDocument = errors.New("documento inválido")
 	ErrInvalidName     = errors.New("nombre y apellido son obligatorios")
 	ErrInvalidEmail    = errors.New("email inválido")
+	ErrEmailTaken      = errors.New("el email ya está registrado")
+	ErrDocumentTaken   = errors.New("el documento ya tiene una cuenta")
 	ErrInvalidPhone    = errors.New("teléfono inválido")
 	ErrUnderage        = errors.New("debes ser mayor de 18 años")
 )
