@@ -17,7 +17,6 @@ func NewPool(ctx context.Context, databaseURL string) (*pgxpool.Pool, error) {
 
 	pingCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel() // cerramos
-	
 
 	if err := pool.Ping(pingCtx); err != nil {
 		pool.Close()

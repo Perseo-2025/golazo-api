@@ -59,12 +59,10 @@ func mapUserError(err error) error {
 		switch pgErr.ConstraintName {
 		case "users_email_unique":
 			return domain.ErrEmailTaken
-		case "users_document_unique": 
+		case "users_document_unique":
 			return domain.ErrEmailTaken
 		}
 	}
 
 	return fmt.Errorf("insertar usuario: %w", err)
-} 
-
-
+}

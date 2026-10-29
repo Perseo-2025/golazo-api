@@ -66,9 +66,9 @@ func run(logger *slog.Logger) error {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET  /health", handler.HealthCheck)
 
-	srv := &http.Server {
-		Handler:  mux,
-		ReadTimeout: 10 * time.Second,
+	srv := &http.Server{
+		Handler:      mux,
+		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 10 * time.Second,
 	}
 
@@ -80,14 +80,14 @@ func run(logger *slog.Logger) error {
 	logger.Info("servidor HTTP escuchando", "addr", listener.Addr().String(), "env", env)
 
 	serverErr := make(chan error, 1)
-	go func(){
+	go func() {
 		serverErr <- srv.Serve(listener)
 	}()
 
 	select {
-	case err := <- serverErr:
+	case err := <-serverErr:
 		return fmt.Errorf("servidor HTTP: %w", err)
-	case <- ctx.Done():
+	case <-ctx.Done():
 		logger.Info("señal recibida, apagando")
 	}
 
@@ -95,7 +95,7 @@ func run(logger *slog.Logger) error {
 	defer cancel()
 
 	if err := srv.Shutdown(shutdownCtx); err != nil {
-		return  fmt.Errorf("apagar servidor: %w", err)
+		return fmt.Errorf("apagar servidor: %w", err)
 	}
 
 	logger.Info("servidor detenido correctamente")
