@@ -15,7 +15,10 @@ import (
 	"github.com/joho/godotenv"
 
 	"github.com/Perseo-2025/golazo-api/internal/handler"
+	"github.com/Perseo-2025/golazo-api/internal/platform/password"
 	"github.com/Perseo-2025/golazo-api/internal/platform/postgres"
+	"github.com/Perseo-2025/golazo-api/internal/repository"
+	"github.com/Perseo-2025/golazo-api/internal/service"
 )
 
 func main() {
@@ -63,8 +66,14 @@ func run(logger *slog.Logger) error {
 
 	logger.Info("conectado a POSTGRESQL")
 
+	userRepo := repository.NewUserPostgres(pool)
+	hasher := password.NewBcryptHasher(12)
+	userService := service.NewUserService(userRepo, hasher)
+	userHandler := handler.NewUserHandler(userService, logger)
+
 	mux := http.NewServeMux()
-	mux.HandleFunc("GET  /health", handler.HealthCheck)
+	mux.HandleFunc("GET /health", handler.HealthCheck)
+	mux.HandleFunc("POST /users", userHandler.Register)
 
 	srv := &http.Server{
 		Handler:      mux,

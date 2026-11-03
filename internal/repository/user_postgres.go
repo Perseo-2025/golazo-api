@@ -25,7 +25,7 @@ func NewUserPostgres(pool *pgxpool.Pool) *UserPostgres {
 }
 
 const insertUserSQL = `
-	INSERT INTO users (document_type, document_number, firts_name, last_name, birth_date, email, phone, passhord_hash) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+	INSERT INTO users (document_type, document_number, first_name, last_name, birth_date, email, phone, password_hash) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 	RETURNING id, status, created_at, updated_at
 `
 
