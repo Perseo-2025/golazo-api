@@ -53,11 +53,9 @@ func run(logger *slog.Logger) error {
 		return errors.New("DARABASE_URL es Obligatorio")
 	}
 
-	// creamos el contexto
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
-
-	// creamos el pool de conexiones
+	
 	pool, err := postgres.NewPool(ctx, databaseURL)
 	if err != nil {
 		return err
@@ -70,10 +68,15 @@ func run(logger *slog.Logger) error {
 	hasher := password.NewBcryptHasher(12)
 	userService := service.NewUserService(userRepo, hasher)
 	userHandler := handler.NewUserHandler(userService, logger)
+	walletRepo := repository.NewWalletPostgres(pool)
+	walletService := service.NewWalletService(walletRepo)
+	walletHandler := handler.NewWalletHandler(walletService, logger)
+
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /health", handler.HealthCheck)
 	mux.HandleFunc("POST /users", userHandler.Register)
+	mux.HandleFunc("POST /wallets/{id}/deposits", walletHandler.Deposit)
 
 	srv := &http.Server{
 		Handler:      mux,

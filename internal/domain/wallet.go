@@ -4,7 +4,6 @@ import (
 	"errors"
 	"strings"
 	"time"
-
 )
 
 // MaxDepositCents es el depósito máximo permitido: S/ 5 000.00
@@ -36,13 +35,13 @@ var (
 
 // Wallet es la billetera de un usuario. Los montos van en céntimos.
 type Wallet struct {
-	ID                string
-	WalletID          string
-	Type              string
-	AmountCents       int64
-	BalanceAfterCents int64
-	IdempotencyKey    int64
-	CreatedAt         time.Time
+	ID           string
+	UserID       string
+	Type         string
+	Currency     string
+	BalanceCents int64
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
 }
 
 // WalletTransaction es un movimiento del ledger. Nunca se modifica
@@ -50,7 +49,7 @@ type WalletTrasaction struct {
 	ID                string
 	WalletID          string
 	Type              TransactionType
-	AmontCents        int64
+	AmountCents       int64
 	BalanceAfterCents int64
 	IdempotencyKey    string
 	CreateAt          time.Time
@@ -60,7 +59,7 @@ type WalletTrasaction struct {
 // si algo no es válido, el saldo no cambia.
 func (w *Wallet) Deposit(amountCents int64, idempotencyKey string) (WalletTrasaction, error) {
 	if amountCents <= 0 {
-		return  WalletTrasaction{}, ErrInvalidAmount
+		return WalletTrasaction{}, ErrInvalidAmount
 	}
 	if amountCents > MaxDepositCents {
 		return WalletTrasaction{}, ErrDepositLimit
@@ -71,14 +70,14 @@ func (w *Wallet) Deposit(amountCents int64, idempotencyKey string) (WalletTrasac
 		return WalletTrasaction{}, ErrInvalidIdempotency
 	}
 
-	w.BalanceAfterCents += amountCents
+	w.BalanceCents += amountCents
 
 	return WalletTrasaction{
-		WalletID: w.ID,
-		Type: TxDeposit,
-		AmontCents: amountCents,
-		BalanceAfterCents: w.BalanceAfterCents,
-		IdempotencyKey: key,
+		WalletID:          w.ID,
+		Type:              TxDeposit,
+		AmountCents:       amountCents,
+		BalanceAfterCents: w.BalanceCents,
+		IdempotencyKey:    key,
 	}, nil
 
 }

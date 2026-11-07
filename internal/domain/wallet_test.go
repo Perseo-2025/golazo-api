@@ -25,18 +25,18 @@ func TestWalletDeposit(t *testing.T) {
 
 	for _, tt := range test {
 		t.Run(tt.name, func(t *testing.T) {
-			w := Wallet{ID: "w-1", BalanceAfterCents: 10_000} // S/ 100.00
+			w := Wallet{ID: "w-1", BalanceCents: 10_000} // S/ 100.00
 
 			tx, err := w.Deposit(tt.amount, tt.key)
 
 			if !errors.Is(err, tt.wantErr) {
 				t.Fatalf("error = %v, se esperaba %v", err, tt.wantErr)
 			}
-			if w.BalanceAfterCents != tt.wantBalance {
-				t.Errorf("saldo = %d, se esperaba %d", w.BalanceAfterCents, tt.wantBalance)
+			if w.BalanceCents != tt.wantBalance {
+				t.Errorf("saldo = %d, se esperaba %d", w.BalanceCents, tt.wantBalance)
 			}
-			if err == nil && tx.BalanceAfterCents != w.BalanceAfterCents{
-				t.Errorf("balance_after = %d, saldo = %d", tx.BalanceAfterCents, w.BalanceAfterCents)
+			if err == nil && tx.BalanceAfterCents != w.BalanceCents{
+				t.Errorf("balance_after = %d, saldo = %d", tx.BalanceAfterCents, w.BalanceCents)
 			}
 		})
 	}

@@ -27,13 +27,13 @@ func NewWalletPostgres(pool *pgxpool.Pool) *WalletPostgres {
 
 // Consultas SQL
 const lockWalletSQL = `
-SELECT id, user_id, type, currency, balance_cents, created_at, upted_at
+SELECT id, user_id, type, currency, balance_cents, created_at, updated_at
 FROM wallets
 WHERE id = $1
 FOR UPDATE`
 
 const findTransactionByKeySQL = `
-SELECT id, wallet_id, type, amount_ents, balance_after_cents, idempotency_key, created_at
+SELECT id, wallet_id, type, amount_cents, balance_after_cents, idempotency_key, created_at
 FROM wallet_transactions
 WHERE wallet_id = $1 AND idempotency_key = $2`
 
