@@ -51,3 +51,14 @@ tasks:
     desc: Ejecuta todos los tests
     cmds:
       - go test ./... -v
+  
+  test:migrate:
+    desc: Aplica las migraciones a la base de datos de tests
+    cmds:
+      - migrate -path {{.MIGRATIONS_DIR}} -database "$TEST_DATABASE_URL" up
+
+  test:integration:
+    desc: Ejecuta los tests de integración contra Postgres
+    deps: [test:migrate]
+    cmds:
+      - go test -tags=integration -count=1 -v ./internal/repository/...

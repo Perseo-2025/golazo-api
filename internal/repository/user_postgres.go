@@ -75,7 +75,7 @@ func mapUserError(err error) error {
 		case "users_email_unique":
 			return domain.ErrEmailTaken
 		case "users_document_unique":
-			return domain.ErrEmailTaken
+			return domain.ErrDocumentTaken
 		}
 	}
 
