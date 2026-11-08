@@ -1,10 +1,13 @@
 package password
 
 import (
+	"errors"
 	"fmt"
 
 	"golang.org/x/crypto/bcrypt"
 )
+
+var ErrMismatch = errors.New("la contraseña no coincide")
 
 // BcryptHasher hashea contraseñas con bcrypt.
 type BcryptHasher struct {
@@ -23,4 +26,15 @@ func (h *BcryptHasher) Hash(plain string) (string, error) {
 		return "", fmt.Errorf("bcrypt: %w", err)
 	}
 	return string(hash), nil
+}
+
+func (h *BcryptHasher) Compare(hash, plain string) error {
+	err := bcrypt.CompareHashAndPassword([] byte(hash), []byte(plain))
+	if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
+		return ErrMismatch
+	}
+	if err != nil {
+		return fmt.Errorf("bcrypt: %w", err)
+	}
+	return nil
 }

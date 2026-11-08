@@ -30,11 +30,43 @@ const insertUserSQL = `
 	INSERT INTO users (document_type, document_number, first_name, last_name, birth_date, email, phone, password_hash) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 	RETURNING id, status, created_at, updated_at
 `
+
 // 2. insert
 const insertWalletSQL = `
 	INSERT INTO wallets (user_id, type, currency)
 	VALUES  ($1, 'real', 'PEN') 
 `
+
+// cnsulta para buscar un usuario
+const findUserByEmailSQL = `
+SELECT id, document_type, document_number, first_name, last_name, birth_date,
+ email, phone, password_hash, status, created_at, updated_at
+ FROM users 
+ WHERE email = $1
+
+`
+
+// FindByEmail busca um usuario por su email. Si no existe, devulve domain.ErrUserNotFound.
+func (r *UserPostgres) FindByEmail(ctx context.Context, email string) (domain.User, error) {
+	var u domain.User
+	var docType, status string
+
+	err := r.pool.QueryRow(ctx, findUserByEmailSQL, email).Scan(
+		&u.ID, &docType, &u.DocumentNumber, &u.FirstName, &u.LastName, &u.BirthDate,
+		&u.Email, &u.Phone, &u.PasswordHash, &status, &u.CreatedAt, &u.UpdatedAt,
+	)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return domain.User{}, domain.ErrUserNotFound
+	}
+	if err != nil {
+		return domain.User{}, fmt.Errorf("buscar usuario por email: %w", err)
+	}
+
+	u.DocumentType = domain.DocumentType(docType)
+	u.Status = domain.UserStatus(status)
+	return u, nil
+
+}
 
 // Create inserta el usuario y lo devuelve con los datos que generó Postgres
 func (r *UserPostgres) Create(ctx context.Context, u domain.User) (domain.User, error) {

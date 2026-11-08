@@ -47,8 +47,6 @@ INSERT INTO wallet_transactions (wallet_id, type, amount_cents, balance_after_ce
 VALUES ($1, $2, $3, $4, $5)
 RETURNING id, created_at`
 
-// Deposit acredita amountCents en la billetera dentro de una transacción.
-// Si la clave es idempotencia ya se usó con los mismos datos, devuelve el movimiento original con created = false y no toca el saldo.
 func (r *WalletPostgres) Deposit(ctx context.Context, walletID string, amountCents int64, key string) (tx domain.WalletTrasaction, created bool, err error) {
 	err = pgx.BeginFunc(ctx, r.pool, func(dbTx pgx.Tx) error {
 		// 1. Bloquear la billetera. Otro depósito a la misma billetera espera aquí.

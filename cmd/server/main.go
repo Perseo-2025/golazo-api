@@ -17,6 +17,7 @@ import (
 	"github.com/Perseo-2025/golazo-api/internal/handler"
 	"github.com/Perseo-2025/golazo-api/internal/platform/password"
 	"github.com/Perseo-2025/golazo-api/internal/platform/postgres"
+	"github.com/Perseo-2025/golazo-api/internal/platform/token"
 	"github.com/Perseo-2025/golazo-api/internal/repository"
 	"github.com/Perseo-2025/golazo-api/internal/service"
 )
@@ -53,9 +54,14 @@ func run(logger *slog.Logger) error {
 		return errors.New("DARABASE_URL es Obligatorio")
 	}
 
+	jwtSecret := os.Getenv("JWT_SECRET")
+	if jwtSecret == "" {
+		return errors.New("JWT_SECRET es obligatorio")
+	}
+
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
-	
+
 	pool, err := postgres.NewPool(ctx, databaseURL)
 	if err != nil {
 		return err
@@ -64,18 +70,34 @@ func run(logger *slog.Logger) error {
 
 	logger.Info("conectado a POSTGRESQL")
 
-	userRepo := repository.NewUserPostgres(pool)
 	hasher := password.NewBcryptHasher(12)
+
+	tokens, err := token.NewJWTManager(jwtSecret, 15*time.Minute)
+	if err != nil {
+		return err
+	}
+
+	dummyHash, err := hasher.Hash("contraseña-que-nadie-usaparaparaigualartiempos")
+	if err != nil {
+		return fmt.Errorf("generar hash false: %w", err)
+	}
+
+
+	userRepo := repository.NewUserPostgres(pool)
 	userService := service.NewUserService(userRepo, hasher)
 	userHandler := handler.NewUserHandler(userService, logger)
+
+	authService := service.NewAuthService(userRepo, hasher, tokens, dummyHash)
+	authHandler := handler.NewAuthHanlder(authService, logger)
+
 	walletRepo := repository.NewWalletPostgres(pool)
 	walletService := service.NewWalletService(walletRepo)
 	walletHandler := handler.NewWalletHandler(walletService, logger)
 
-
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /health", handler.HealthCheck)
 	mux.HandleFunc("POST /users", userHandler.Register)
+	mux.HandleFunc("POST /auth/login", authHandler.Login)
 	mux.HandleFunc("POST /wallets/{id}/deposits", walletHandler.Deposit)
 
 	srv := &http.Server{
@@ -111,6 +133,5 @@ func run(logger *slog.Logger) error {
 	}
 
 	logger.Info("servidor detenido correctamente")
-
 	return nil
 }

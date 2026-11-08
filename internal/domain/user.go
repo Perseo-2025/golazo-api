@@ -39,6 +39,7 @@ var (
 	ErrDocumentTaken   = errors.New("el documento ya tiene una cuenta")
 	ErrInvalidPhone    = errors.New("teléfono inválido")
 	ErrUnderage        = errors.New("debes ser mayor de 18 años")
+	ErrUserNotFound    = errors.New("usuario no encontrado")
 )
 
 var (

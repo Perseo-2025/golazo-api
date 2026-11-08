@@ -3,6 +3,7 @@ module github.com/Perseo-2025/golazo-api
 go 1.26.3
 
 require (
+	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/jackc/pgx/v5 v5.11.0
 	github.com/joho/godotenv v1.5.1
 	golang.org/x/crypto v0.58.0
