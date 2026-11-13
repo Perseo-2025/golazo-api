@@ -2,7 +2,7 @@ package service
 
 import (
 	"context"
-	"github.com/Perseo-2025/golazo-api/internal/domain"
+	"github.com/kingperseocs/golazo-api/internal/domain"
 )
 
 //  WalletRepository es lo que el servicio necesita para mover dinero.

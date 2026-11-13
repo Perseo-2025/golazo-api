@@ -8,8 +8,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/Perseo-2025/golazo-api/internal/domain"
-	"github.com/Perseo-2025/golazo-api/internal/service"
+	"github.com/kingperseocs/golazo-api/internal/domain"
+	"github.com/kingperseocs/golazo-api/internal/service"
 )
 
 // UserRegisterer es lo que el handler necesita del servicio.

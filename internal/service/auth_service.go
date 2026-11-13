@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Perseo-2025/golazo-api/internal/domain"
+	"github.com/kingperseocs/golazo-api/internal/domain"
 )
 
 // Errores del login. Se devuelve el mismo error si el email no existe o si la contraseña es incorrecta, para no relevar qué email tiene cuenta.

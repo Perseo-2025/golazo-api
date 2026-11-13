@@ -10,8 +10,8 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	"github.com/Perseo-2025/golazo-api/internal/domain"
-	"github.com/Perseo-2025/golazo-api/internal/repository"
+	"github.com/kingperseocs/golazo-api/internal/domain"
+	"github.com/kingperseocs/golazo-api/internal/repository"
 )
 
 // newTestPool conecta a la base de tests y la deja vacía.

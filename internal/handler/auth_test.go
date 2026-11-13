@@ -12,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Perseo-2025/golazo-api/internal/service"
+	"github.com/kingperseocs/golazo-api/internal/service"
 )
 
 // fakeAuthenticator devuelve siempre el resultado y el error que le indiquemos.

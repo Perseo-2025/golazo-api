@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Perseo-2025/golazo-api/internal/domain"
+	"github.com/kingperseocs/golazo-api/internal/domain"
 )
 
 // fakeRepo cumple UserRepository sin tocar una base de datos.

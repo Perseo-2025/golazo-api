@@ -14,12 +14,12 @@ import (
 
 	"github.com/joho/godotenv"
 
-	"github.com/Perseo-2025/golazo-api/internal/handler"
-	"github.com/Perseo-2025/golazo-api/internal/platform/password"
-	"github.com/Perseo-2025/golazo-api/internal/platform/postgres"
-	"github.com/Perseo-2025/golazo-api/internal/platform/token"
-	"github.com/Perseo-2025/golazo-api/internal/repository"
-	"github.com/Perseo-2025/golazo-api/internal/service"
+	"github.com/kingperseocs/golazo-api/internal/handler"
+	"github.com/kingperseocs/golazo-api/internal/platform/password"
+	"github.com/kingperseocs/golazo-api/internal/platform/postgres"
+	"github.com/kingperseocs/golazo-api/internal/platform/token"
+	"github.com/kingperseocs/golazo-api/internal/repository"
+	"github.com/kingperseocs/golazo-api/internal/service"
 )
 
 func main() {

@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/Perseo-2025/golazo-api/internal/domain"
+	"github.com/kingperseocs/golazo-api/internal/domain"
 )
 
 // WalletDepositor es lo que el hanlder necesita del servicio del billeteras.

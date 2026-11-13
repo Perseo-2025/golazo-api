@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/Perseo-2025/golazo-api/internal/service"
+	"github.com/kingperseocs/golazo-api/internal/service"
 )
 
 // @Controlador
