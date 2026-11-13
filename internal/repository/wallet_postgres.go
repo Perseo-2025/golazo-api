@@ -29,7 +29,7 @@ func NewWalletPostgres(pool *pgxpool.Pool) *WalletPostgres {
 const lockWalletSQL = `
 SELECT id, user_id, type, currency, balance_cents, created_at, updated_at
 FROM wallets
-WHERE id = $1
+WHERE id = $1 AND user_id = $2
 FOR UPDATE`
 
 const findTransactionByKeySQL = `
@@ -47,11 +47,11 @@ INSERT INTO wallet_transactions (wallet_id, type, amount_cents, balance_after_ce
 VALUES ($1, $2, $3, $4, $5)
 RETURNING id, created_at`
 
-func (r *WalletPostgres) Deposit(ctx context.Context, walletID string, amountCents int64, key string) (tx domain.WalletTrasaction, created bool, err error) {
+func (r *WalletPostgres) Deposit(ctx context.Context, userID, walletID string, amountCents int64, key string) (tx domain.WalletTrasaction, created bool, err error) {
 	err = pgx.BeginFunc(ctx, r.pool, func(dbTx pgx.Tx) error {
 		// 1. Bloquear la billetera. Otro depósito a la misma billetera espera aquí.
 		var w domain.Wallet
-		err := dbTx.QueryRow(ctx, lockWalletSQL, walletID).Scan(
+		err := dbTx.QueryRow(ctx, lockWalletSQL, walletID, userID).Scan(
 			&w.ID, &w.UserID, &w.Type, &w.Currency, &w.BalanceCents, &w.CreatedAt, &w.UpdatedAt, 
 		)
 		if err != nil {

@@ -51,8 +51,8 @@ func newTestUser(email, document string) domain.User {
 	}
 }
 
-// createUserWithWallet registra un usuario y devuelve el id de su billetera real.
-func createUserWithWallet(t *testing.T, pool *pgxpool.Pool, email, document string) string {
+// createUserWithWallet registra un usuario y devuelve su id y el de su billetera real.
+func createUserWithWallet(t *testing.T, pool *pgxpool.Pool, email, document string) (string, string) {
 	t.Helper()
 	ctx := context.Background()
 
@@ -66,7 +66,7 @@ func createUserWithWallet(t *testing.T, pool *pgxpool.Pool, email, document stri
 	if err != nil {
 		t.Fatalf("buscar billetera: %v", err)
 	}
-	return walletID
+	return user.ID, walletID
 }
 
 // assertLedgerMatches comprueba que el saldo es el esperado y que coincide

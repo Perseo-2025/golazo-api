@@ -15,11 +15,11 @@ import (
 
 func TestWalletPostgres_DepositoEIdempotencia(t *testing.T) {
 	pool := newTestPool(t)
-	walletID := createUserWithWallet(t, pool, "ana@golazo.pe", "12345678")
+	userID, walletID := createUserWithWallet(t, pool, "ana@golazo.pe", "12345678")
 	repo := repository.NewWalletPostgres(pool)
 	ctx := context.Background()
 
-	first, created, err := repo.Deposit(ctx, walletID, 5_000, "yape-001")
+	first, created, err := repo.Deposit(ctx, userID, walletID, 5_000, "yape-001")
 	if err != nil {
 		t.Fatalf("primer depósito: %v", err)
 	}
@@ -28,7 +28,7 @@ func TestWalletPostgres_DepositoEIdempotencia(t *testing.T) {
 	}
 
 	// Reintento con la misma clave y el mismo monto.
-	again, created, err := repo.Deposit(ctx, walletID, 5_000, "yape-001")
+	again, created, err := repo.Deposit(ctx, userID, walletID, 5_000, "yape-001")
 	if err != nil {
 		t.Fatalf("reintento: %v", err)
 	}
@@ -40,7 +40,7 @@ func TestWalletPostgres_DepositoEIdempotencia(t *testing.T) {
 	}
 
 	// Misma clave, otro monto.
-	_, _, err = repo.Deposit(ctx, walletID, 9_000, "yape-001")
+	_, _, err = repo.Deposit(ctx, userID, walletID, 9_000, "yape-001")
 	if !errors.Is(err, domain.ErrIdempotencyConflict) {
 		t.Errorf("error = %v, se esperaba ErrIdempotencyConflict", err)
 	}
@@ -51,18 +51,34 @@ func TestWalletPostgres_DepositoEIdempotencia(t *testing.T) {
 func TestWalletPostgres_BilleteraInexistente(t *testing.T) {
 	pool := newTestPool(t)
 	repo := repository.NewWalletPostgres(pool)
+	anyUser := "00000000-0000-0000-0000-000000000000"
 
 	for _, id := range []string{"00000000-0000-0000-0000-000000000000", "no-es-un-uuid"} {
-		_, _, err := repo.Deposit(context.Background(), id, 5_000, "yape-001")
+		_, _, err := repo.Deposit(context.Background(), anyUser, id, 5_000, "yape-001")
 		if !errors.Is(err, domain.ErrWalletNotFound) {
 			t.Errorf("id %q: error = %v, se esperaba ErrWalletNotFound", id, err)
 		}
 	}
 }
 
+func TestWalletPostgres_BilleteraAjena(t *testing.T) {
+	pool := newTestPool(t)
+	_, anaWallet := createUserWithWallet(t, pool, "ana@golazo.pe", "12345678")
+	luisID, _ := createUserWithWallet(t, pool, "luis@golazo.pe", "87654321")
+	repo := repository.NewWalletPostgres(pool)
+
+	// Luis intenta depositar en la billetera de Ana.
+	_, _, err := repo.Deposit(context.Background(), luisID, anaWallet, 5_000, "yape-001")
+	if !errors.Is(err, domain.ErrWalletNotFound) {
+		t.Fatalf("error = %v, se esperaba ErrWalletNotFound", err)
+	}
+
+	assertLedgerMatches(t, pool, anaWallet, 0)
+}
+
 func TestWalletPostgres_DepositosConcurrentes(t *testing.T) {
 	pool := newTestPool(t)
-	walletID := createUserWithWallet(t, pool, "ana@golazo.pe", "12345678")
+	userID, walletID := createUserWithWallet(t, pool, "ana@golazo.pe", "12345678")
 	repo := repository.NewWalletPostgres(pool)
 
 	const workers = 50
@@ -76,7 +92,7 @@ func TestWalletPostgres_DepositosConcurrentes(t *testing.T) {
 		go func(i int) {
 			defer wg.Done()
 			key := fmt.Sprintf("concurrente-%d", i)
-			if _, _, err := repo.Deposit(context.Background(), walletID, amount, key); err != nil {
+			if _, _, err := repo.Deposit(context.Background(), userID, walletID, amount, key); err != nil {
 				errs <- err
 			}
 		}(i)

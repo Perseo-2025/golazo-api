@@ -13,7 +13,7 @@ import (
 
 // WalletDepositor es lo que el hanlder necesita del servicio del billeteras.
 type WalletDepositor interface {
-	Deposit(ctx context.Context, walletID string, amountCents int64, ky string) (domain.WalletTrasaction, bool, error)
+	Deposit(ctx context.Context, userID, walletID string, amountCents int64, ky string) (domain.WalletTrasaction, bool, error)
 }
 
 // WalletHanlder atiende las rutas HTTP de bileteras.
@@ -43,6 +43,15 @@ type transactionResponse struct {
 
 // Deposit atiende Post /wallets/{id}/deposits
 func (h *WalletHandler) Deposit(w http.ResponseWriter, r *http.Request) {
+
+	userID, ok := UserIDFromContext(r.Context())
+	if !ok {
+		// solo pasa alguien registróla la ruta sin el middleware
+		h.logger.Error("depósito sin usuario autenticado en el contexto")
+		writeError(w, h.logger, http.StatusInternalServerError, "internal_error","ocurrió un error inesperado, intenta más tarde")
+		return
+	}
+
 	walletID := r.PathValue("id")
 	key := r.Header.Get("Idempotency-Key")
 
@@ -58,7 +67,7 @@ func (h *WalletHandler) Deposit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tx, created, err := h.svc.Deposit(r.Context(), walletID, req.AmountCents, key)
+	tx, created, err := h.svc.Deposit(r.Context(), userID, walletID, req.AmountCents, key)
 	if err != nil {
 		h.writeDepositError(w, err)
 		return

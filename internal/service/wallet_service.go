@@ -7,7 +7,7 @@ import (
 
 //  WalletRepository es lo que el servicio necesita para mover dinero.
 type WalletRepository interface {
-	Deposit(ctx context.Context, walletID string, amountCents int64, key string) (domain.WalletTrasaction, bool, error)
+	Deposit(ctx context.Context, userID, walletID string, amountCents int64, key string) (domain.WalletTrasaction, bool, error)
 }
 
 //WalletService
@@ -21,6 +21,6 @@ func NewWalletService(repo WalletRepository) *WalletService {
 }
 
 // Deposit acredita dinero en la billetera. created indica si el movimiento es nuevo (true) o si es un rendimiento de uno ya procesado (false)
-func (s *WalletService) Deposit(ctx context.Context, walletID string, amountCents int64, key string) (domain.WalletTrasaction, bool, error) {
-	return s.repo.Deposit(ctx, walletID, amountCents, key)
+func (s *WalletService) Deposit(ctx context.Context, userID,walletID string, amountCents int64, key string) (domain.WalletTrasaction, bool, error) {
+	return s.repo.Deposit(ctx, userID, walletID, amountCents, key)
 }
