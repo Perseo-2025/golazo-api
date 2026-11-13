@@ -82,6 +82,8 @@ func run(logger *slog.Logger) error {
 		return fmt.Errorf("generar hash false: %w", err)
 	}
 
+	requireAuth := handler.RequireAuth(tokens, logger)
+
 
 	userRepo := repository.NewUserPostgres(pool)
 	userService := service.NewUserService(userRepo, hasher)
@@ -98,7 +100,8 @@ func run(logger *slog.Logger) error {
 	mux.HandleFunc("GET /health", handler.HealthCheck)
 	mux.HandleFunc("POST /users", userHandler.Register)
 	mux.HandleFunc("POST /auth/login", authHandler.Login)
-	mux.HandleFunc("POST /wallets/{id}/deposits", walletHandler.Deposit)
+	//---
+	mux.Handle("POST /wallets/{id}/deposits", requireAuth(http.HandlerFunc(walletHandler.Deposit)))        
 
 	srv := &http.Server{
 		Handler:      mux,

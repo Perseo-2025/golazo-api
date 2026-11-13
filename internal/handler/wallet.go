@@ -38,7 +38,7 @@ type transactionResponse struct {
 	Type              string    `json:"type"`
 	AmountCents       int64     `json:"amount_cents"`
 	BalanceAfterCents int64     `json:"balance_after_cents"`
-	CreatedAt         time.Time `json:"created_At"`
+	CreatedAt         time.Time `json:"created_at"`
 }
 
 // Deposit atiende Post /wallets/{id}/deposits
